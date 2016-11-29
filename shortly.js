@@ -37,11 +37,9 @@ app.use(session({
 app.get('/', 
 function(req, res) {  
   console.log('You ARE NOT LOGGED IN? ', req.session.username);
-  if (util.checkUser(req)) {    
-    res.render('index');  
-  } else {
-    res.redirect('/login'); //IF NOT LOGGED
-  }
+  // if (util.checkUser(req)) {    
+  res.render('index');  
+  // } 
 });
 
 app.get('/login',   
@@ -52,11 +50,27 @@ function(req, res) {
 
 app.post('/login',   
 function(req, res) {
+  var hash = bcrypt.hashSync(req.body.password);
+
   if (req.session.error) {
     console.log('req.session.error');
-  } else {
+  } else {    
     req.session.username = req.body.username;
-    res.redirect('/');
+
+    new User({ password: hash }).fetch().then(
+      function(found) { 
+        if (found) {
+          if (bcrypt.compareSync(User.get('password'), hash)) {
+            res.redirect('/');  
+          } else {
+            console.log('Your password is invalid');
+            res.redirect('/login');
+          }        
+        } else {
+          console.log('User not found. Create an account!');
+          res.redirect('/signup');
+        }
+      });
   }
 });
 
@@ -84,8 +98,8 @@ function(req, res) {
     password: hash,
   })
   .then(function(user) {
-    //res.status(200).send(user);
-    console.log('SHOULD NOT REDIRECT');
+    //res.send(user);
+    console.log('Redirection to home page');
     res.redirect('/');
   });
 
