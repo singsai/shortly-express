@@ -50,26 +50,25 @@ function(req, res) {
 
 app.post('/login',   
 function(req, res) {
-  var hash = bcrypt.hashSync(req.body.password);
 
   if (req.session.error) {
     console.log('req.session.error');
   } else {    
     req.session.username = req.body.username;
 
-    new User({ password: hash }).fetch().then(
-      function(found) { 
-        if (found) {
-          if (bcrypt.compareSync(User.get('password'), hash)) {
-            res.redirect('/');  
-          } else {
-            console.log('Your password is invalid');
-            res.redirect('/login');
-          }        
-        } else {
-          console.log('User not found. Create an account!');
-          res.redirect('/signup');
-        }
+    User.where('username', req.session.username).fetch().
+      then(function(user) {        
+        var hash = bcrypt.hashSync(req.body.password, user.get('salt'));
+
+        // console.log('comparing: ', bcrypt.compareSync(user.get('password'), hash));
+        // console.log('User.GET: ', user.get('password'));
+        // console.log('THE HASH: ', hash);
+        if (user.get('password') === hash) {
+          res.redirect('/');  
+        } else {          
+          console.log('Your password is invalid');
+          res.redirect('/login');
+        }   
       });
   }
 });
@@ -77,7 +76,7 @@ function(req, res) {
 app.get('/logout', 
 function(req, res) {
   req.session.username = undefined;
-  res.redirect('/');
+  res.redirect('/login');
 });
 
 app.get('/signup', 
@@ -91,11 +90,13 @@ function(req, res) {
   console.log('signing up');
   //something 
   
-  var hash = bcrypt.hashSync(req.body.password);
+  var salt = bcrypt.genSaltSync();
+  var hash = bcrypt.hashSync(req.body.password, salt);
   
   Users.create({
     username: req.body.username,
     password: hash,
+    salt: salt
   })
   .then(function(user) {
     //res.send(user);
