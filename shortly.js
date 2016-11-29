@@ -29,15 +29,14 @@ app.set('trust proxy', 1); // trust first proxy
 
 app.use(session({
   secret: 'keyboard cat',
-  resave: true,
-  saveUninitialized: true,
-  cookie: { secure: true }
+  resave: false,
+  saveUninitialized: true
 }));
 
 app.get('/', 
 function(req, res) {  
-  console.log('You ARE NOT LOGGED IN? ', req.session.sessionID);
-  if (req.session.sessionID) {    
+  console.log('You ARE NOT LOGGED IN? ', req.session.username);
+  if (req.session.username) {    
     res.render('index');  
   } else {
     res.redirect('/login'); //IF NOT LOGGED
@@ -48,7 +47,7 @@ app.get('/login',
 function(req, res) {
   res.render('login');
   //console.log('REQUEST.SESSION', req.session);
-  console.log('req.sessionID: ', req.sessionID);
+  console.log('req.session.username: ', req.session.username);
   //something
 });
 
@@ -57,10 +56,15 @@ function(req, res) {
   if (req.session.error) {
     console.log('req.session.error');
   } else {
-    console.log('req.sessionID: ', req.sessionID);
+    console.log('req.body.username: ', req.body.username);
+    // console.log('req.session.username: ', req.session.username);
 
     // if (req.body.username) {
-    //   req.session.cookie.username = req.body.username;
+    req.session.username = req.body.username;
+
+    console.log('req.session.username: ', req.session.username);
+
+    res.redirect('/');
     // }
   }
   //res.render('login');
@@ -107,16 +111,14 @@ function(req, res) {
   console.log('IN LINKS and Logged in As: ', req);
 
   // res.redirect('/login'); //IF NOT LOGGED
-  if (req.session.sessionID) {
-    res.redirect('/login'); //IF NOT LOGGED
-     
-  } else {
-  
+  if (req.session.username) {
     Links.reset().fetch().then(function(links) {
       res.status(200).send(links.models);
     });    
-  
-   }
+     
+  } else {
+    res.redirect('/login'); //IF NOT LOGGED  
+  }
 
 });
 
