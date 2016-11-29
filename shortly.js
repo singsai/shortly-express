@@ -11,6 +11,8 @@ var Links = require('./app/collections/links');
 var Link = require('./app/models/link');
 var Click = require('./app/models/click');
 
+var session = require('express-session');
+
 var app = express();
 
 app.set('views', __dirname + '/views');
@@ -23,21 +25,99 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
 
+app.set('trust proxy', 1); // trust first proxy
+
+app.use(session({
+  secret: 'keyboard cat',
+  resave: true,
+  saveUninitialized: true,
+  cookie: { secure: true }
+}));
+
 app.get('/', 
+function(req, res) {  
+  console.log('You ARE NOT LOGGED IN? ', req.session.sessionID);
+  if (req.session.sessionID) {    
+    res.render('index');  
+  } else {
+    res.redirect('/login'); //IF NOT LOGGED
+  }
+});
+
+app.get('/login',   
 function(req, res) {
-  res.render('index');
+  res.render('login');
+  //console.log('REQUEST.SESSION', req.session);
+  console.log('req.sessionID: ', req.sessionID);
+  //something
+});
+
+app.post('/login',   
+function(req, res) {
+  if (req.session.error) {
+    console.log('req.session.error');
+  } else {
+    console.log('req.sessionID: ', req.sessionID);
+
+    // if (req.body.username) {
+    //   req.session.cookie.username = req.body.username;
+    // }
+  }
+  //res.render('login');
+  //console.log('REQUEST.SESSION', req.session);
+  //something
+});
+
+app.get('/logout', 
+function(req, res) {
+
+  store.clear(function(err) {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log(req.session);
+    }
+  });
+
+  req.session.destroy(function() {
+    res.redirect('/');
+  });
+});
+
+app.get('/signup', 
+function(req, res) {
+  res.render('signup');  
+  //something
+});
+
+app.post('/signup', 
+function(req, res) {
+  console.log('signing up');
+  //something
 });
 
 app.get('/create', 
 function(req, res) {
+  res.redirect('/login'); //IF NOT LOGGED
   res.render('index');
 });
 
 app.get('/links', 
 function(req, res) {
-  Links.reset().fetch().then(function(links) {
-    res.status(200).send(links.models);
-  });
+  console.log('IN LINKS and Logged in As: ', req);
+
+  // res.redirect('/login'); //IF NOT LOGGED
+  if (req.session.sessionID) {
+    res.redirect('/login'); //IF NOT LOGGED
+     
+  } else {
+  
+    Links.reset().fetch().then(function(links) {
+      res.status(200).send(links.models);
+    });    
+  
+   }
+
 });
 
 app.post('/links', 
@@ -75,7 +155,6 @@ function(req, res) {
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
-
 
 
 /************************************************************/
