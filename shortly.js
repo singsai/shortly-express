@@ -2,6 +2,7 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
+var bcrypt = require('bcrypt-nodejs');
 
 
 var db = require('./app/config');
@@ -74,7 +75,20 @@ function(req, res) {
 app.post('/signup', 
 function(req, res) {
   console.log('signing up');
-  //something
+  //something 
+  
+  var hash = bcrypt.hashSync(req.body.password);
+  
+  Users.create({
+    username: req.body.username,
+    password: hash,
+  })
+  .then(function(user) {
+    //res.status(200).send(user);
+    console.log('SHOULD NOT REDIRECT');
+    res.redirect('/');
+  });
+
 });
 
 app.get('/create', 
@@ -88,11 +102,11 @@ function(req, res) {
 
 app.get('/links', 
 function(req, res) {
-  console.log('IN LINKS and Logged in As: ', req);
+  // console.log('IN LINKS and Logged in As: ', req);
 
   // res.redirect('/login'); //IF NOT LOGGED
   if (util.checkUser(req)) {
-    console.log('username: ', req.session.username);
+    // console.log('username: ', req.session.username);
 
     Links.reset().fetch().then(function(links) {
       res.status(200).send(links.models);
