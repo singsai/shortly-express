@@ -36,7 +36,7 @@ app.use(session({
 app.get('/', 
 function(req, res) {  
   console.log('You ARE NOT LOGGED IN? ', req.session.username);
-  if (util.isLoggedIn(req)) {    
+  if (util.checkUser(req)) {    
     res.render('index');  
   } else {
     res.redirect('/login'); //IF NOT LOGGED
@@ -62,10 +62,7 @@ function(req, res) {
 app.get('/logout', 
 function(req, res) {
   req.session.username = undefined;
-
-  req.session.destroy(function() {
-    res.redirect('/');
-  });
+  res.redirect('/');
 });
 
 app.get('/signup', 
@@ -82,7 +79,7 @@ function(req, res) {
 
 app.get('/create', 
 function(req, res) {
-  if (util.isLoggedIn(req)) {
+  if (util.checkUser(req)) {
     res.render('index');
   } else {
     res.redirect('/login'); //IF NOT LOGGED  
@@ -94,7 +91,7 @@ function(req, res) {
   console.log('IN LINKS and Logged in As: ', req);
 
   // res.redirect('/login'); //IF NOT LOGGED
-  if (util.isLoggedIn(req)) {
+  if (util.checkUser(req)) {
     console.log('username: ', req.session.username);
 
     Links.reset().fetch().then(function(links) {
