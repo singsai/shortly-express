@@ -45,7 +45,8 @@ function(req, res) {
 app.get('/login',   
 function(req, res) {
   res.render('login');
-
+  // console.log('req.session.userId: ', req.session.userId);
+  // console.log('req.session.username: ', req.session.username);
 });
 
 app.post('/login',   
@@ -64,6 +65,7 @@ function(req, res) {
         // console.log('User.GET: ', user.get('password'));
         // console.log('THE HASH: ', hash);
         if (user.get('password') === hash) {
+          // console.log('userID: ', user.get('id'));
           res.redirect('/');  
         } else {          
           console.log('Your password is invalid');
@@ -152,14 +154,19 @@ function(req, res) {
           return res.sendStatus(404);
         }
 
-        Links.create({
-          url: uri,
-          title: title,
-          baseUrl: req.headers.origin
-        })
-        .then(function(newLink) {
-          res.status(200).send(newLink);
-        });
+        User.where('username', req.session.username).fetch().
+          then(function(user) { 
+            Links.create({
+              url: uri,
+              title: title,
+              baseUrl: req.headers.origin,
+              userId: user.id
+            })
+            .then(function(newLink) {
+              res.status(200).send(newLink);
+            });
+          });
+
       });
     }
   });
